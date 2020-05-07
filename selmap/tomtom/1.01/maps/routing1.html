@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html class='use-all-space'>
+    <head>
+        <meta http-equiv='X-UA-Compatible' content='IE=Edge' />
+        <meta charset='UTF-8'>
+        <title>SelExped térkép - TomTom</title>
+        <meta name='viewport'
+            content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>
+        <link rel='stylesheet' type='text/css' href='../../../../api/tomtom/5.51.0/sdk/maps.css'>
+        <link rel='stylesheet' type='text/css' href='../../../../api/tomtom/5.51.0/plugins/assets/ui-library/index.css'/>
+    </head>
+    <style>
+        .map-view .icon {
+            height: 30px;
+            width: 30px;
+        }
+        .map-view .tt-icon.-finish {
+            height: 16px;
+            width: 16px;
+        }
+        .map-view .icon-spacing {
+            float: left;
+            margin-right: 14px;
+            margin-top: 24px;
+        }
+        .map-view .marker {
+            align-items: center;
+            background-color: #4a90e2;
+            border: solid 3px #2faaff;
+            border-radius: 50%;
+            display: flex;
+            height: 32px;
+            justify-content: center;
+            transition: width .1s, height .1s;
+            width: 32px;
+        }
+    </style>
+    <body>
+        <div class='map-view'>
+            <div id='map' class='full-map'></div>
+        </div>
+        <script src='../../../../api/tomtom/5.51.0/sdk/maps-web.min.js'></script>
+        <script type='text/javascript' src='../../../../api/tomtom/5.51.0/plugins/assets/js/mobile-or-tablet.js'></script>
+        <script>
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '../../../../api/sel/1.01/global/result.php?id='+getQueryParams()['id'], true);
+
+            xhr.onload = function(){
+                if (this.status==200){
+                        var result =JSON.parse(this.responseText);
+                        var params=JSON.parse(result["result"]);
+
+                        var map = tt.map({
+                                        key: params.key,
+                                        container: 'map',
+                                        style: 'tomtom://vector/1/basic-main',
+                                        dragPan: !isMobileOrTablet()
+                                    });
+
+                                    var LngLat=[];
+                                    for (var i=0;i<params.locs.length; i++){
+                                        LngLat[i]=[params.locs[i].lon,params.locs[i].lat]
+                                    }
+
+                                    map.addControl(new tt.NavigationControl());
+                                    map.once('load', handleCalculateRouteRequest);
+
+                                    function handleCalculateRouteRequest() {
+                                        map.addLayer({
+                                                        'id': 'route',
+                                                        'type': 'line',
+                                                        'source': {
+                                                            'type': 'geojson',
+                                                            'data': {
+                                                                'type':'FeatureCollection',
+                                                                'features':[
+                                                                    {
+                                                                        'type':'Feature',
+                                                                        'geometry':{
+                                                                            'type':'LineString',
+                                                                            'properties':{},
+                                                                            'coordinates': LngLat
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        'paint': {
+                                                            'line-color': '#4a90e2',
+                                                            'line-width': 5
+                                                        }
+                                                    });
+
+                                    for (var i=0;i<params.markers.length; i++){
+                                        if (i==0){
+                                            type="start"
+                                        }else if (i==params.markers.length-1){
+                                            type="finish"
+                                        }else {
+                                            type="start"
+                                        }
+
+                                        addMarkers(
+                                            params.markers[i].lonlat.split(",")[1],
+                                            params.markers[i].lonlat.split(",")[0],
+                                            type,
+                                            "#"+(i+1)+" "+params.markers[i].popup);
+                                    }
+
+                                    var bounds = new tt.LngLatBounds();
+
+                                    LngLat.forEach(function(point) {
+                                        bounds.extend(tt.LngLat.convert(point));
+                                    });
+
+                                    map.fitBounds(bounds, { duration: 0, padding: 150 });
+                                    }
+
+                                    function addMarkers(lon,lat,type,popup) {
+                                        var popup = new tt.Popup({offset: 30}).setText(popup);
+                                        var point=[lon,lat];
+
+                                        new tt.Marker({ element: createMarkerElement(type) })
+                                            .setLngLat(point)
+                                            .setPopup(popup)
+                                            .addTo(map);
+                                    }
+
+                                    function createMarkerElement(type) {
+                                        var element = document.createElement('div');
+                                        var innerElement = document.createElement('div');
+
+                                        element.className = 'marker';
+                                        innerElement.className = 'tt-icon -white -' + type;
+                                        element.appendChild(innerElement);
+                                        return element;
+                                    }
+
+                }
+            }
+
+            xhr.send();
+
+            function getQueryParams() {
+                let result = {};
+                let params = window.location.search;
+            
+                // remove the '?' character
+                params = params.substr(1);
+                let queryParamArray = params.split('&amp;');
+            
+                // iterate over parameter array
+                queryParamArray.forEach(function(queryParam) {
+                
+                // split the query parameter over '='
+                let item = queryParam.split("=");
+                result[item[0]] = decodeURIComponent(item[1]);
+                });
+
+                return result;
+            }
+        </script>
+    </body>
+</html>

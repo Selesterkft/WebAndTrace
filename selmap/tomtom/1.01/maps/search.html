@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html class='use-all-space'>
+    <head>
+        <meta http-equiv='X-UA-Compatible' content='IE=Edge' />
+        <meta charset='UTF-8'>
+        <title>SelExped térkép - TomTom</title>
+        <meta name='viewport'
+            content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>
+        <link rel='stylesheet' type='text/css' href='../../../../api/tomtom/5.51.0/sdk/maps.css'>
+        <link rel='stylesheet' type='text/css' href='../../../../api/tomtom/5.51.0/plugins/assets/ui-library/index.css'/>
+    </head>
+    <style>
+        .marker-location-icon {
+            background-size: contain;
+        }
+    </style>
+    <body>
+        <div id='map' class='map'></div>
+        <script src='../../../../api/tomtom/5.51.0/sdk/maps-web.min.js'></script>
+        <script type='text/javascript' src='../../../../api/tomtom/5.51.0/plugins/assets/js/mobile-or-tablet.js'></script>
+        <script type='text/javascript' src='../../../../api/tomtom/5.51.0/plugins/assets/js/formatters.js'></script>
+        <script>
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '../../../../api/sel/1.01/global/result.php?id='+getQueryParams()['id'], true);
+
+            xhr.onload = function(){
+                if (this.status==200){
+                    var result =JSON.parse(this.responseText);
+                    var params=JSON.parse(result["result"]);
+                    var map_settings=JSON.parse(params.map_settings);
+
+                    var center = [params.lon, params.lat];
+                    var map = tt.map({
+                                        key: params.key,
+                                        container: 'map',
+                                        style: 'tomtom://'+map_settings.MapType+'/1/'+map_settings.MapStyle+'-'+map_settings.MapNight,
+                                        dragPan: !isMobileOrTablet(),
+                                        center: center,
+                                        zoom: 14
+                                    });
+
+                    map.addControl(new tt.NavigationControl());
+                    map.once('load', handleShowLocationRequest);
+
+                    function handleShowLocationRequest(){
+                        var lon;
+                        var lat;
+                        var size;
+                        var path;
+                        var popup;
+
+                        lon=params.lon;
+                        lat=params.lat;
+                        size=map_settings.LocationIconSize;
+                        path="img/"+map_settings.LocationIcon.split("_")[1]+"/"+map_settings.LocationIcon;
+                        popup=params.popuptitle+"<br><b>"+params.popuphead+"</b><br>"+params.popupbody;
+
+                        var point=[lon,lat];
+                        var iconmarker = document.createElement("div");
+
+                        iconmarker.className = "marker-location-icon";
+                        iconmarker.style.backgroundImage="url("+path+")";
+                        iconmarker.style.width=size.split(";")[0];
+                        iconmarker.style.height=size.split(";")[1];
+
+                        var popup = new tt.Popup({offset: 25, closeOnMove: false, closeOnClick: false}).setHTML(popup);
+                        var marker=new tt.Marker({element: iconmarker, anchor: getIconAnchor(map_settings.LocationIcon)}).setLngLat(point).setPopup(popup).addTo(map);
+                    }
+
+                    function getIconAnchor(LocationIcon){
+                        var params=LocationIcon.split("_")
+                        var anchor=params[4].split(".")[0]
+
+                        if (anchor=="C"){
+                            return "center";
+                        }
+                        if (anchor=="T"){
+                            return "top";
+                        }
+                        if (anchor=="B"){
+                            return "bottom";
+                        }
+                        if (anchor=="L"){
+                            return "left";
+                        }
+                        if (anchor=="R"){
+                            return "right";
+                        }
+                        if (anchor=="TL"){
+                            return "top-left";
+                        }
+                        if (anchor=="TR"){
+                            return "top-right";
+                        }
+                        if (anchor=="BL"){
+                            return "bottom-left";
+                        }
+                        if (anchor=="BR"){
+                            return "bottom-right";
+                        }
+                    }
+                }
+            }
+
+            xhr.send();
+            
+            function getQueryParams() {
+                let result = {};
+                let params = window.location.search;
+            
+                // remove the '?' character
+                params = params.substr(1);
+                let queryParamArray = params.split('&amp;');
+            
+                // iterate over parameter array
+                queryParamArray.forEach(function(queryParam) {
+                
+                // split the query parameter over '='
+                let item = queryParam.split("=");
+                result[item[0]] = decodeURIComponent(item[1]);
+                });
+
+                return result;
+            }
+
+        </script>
+    </body>
+    </html>

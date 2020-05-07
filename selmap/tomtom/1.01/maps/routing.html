@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html class='use-all-space'>
+    <head>
+        <meta http-equiv='X-UA-Compatible' content='IE=Edge' />
+        <meta charset='UTF-8'>
+        <title>SelExped térkép - TomTom</title>
+        <meta name='viewport'
+            content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>
+        <link rel='stylesheet' type='text/css' href='../../../../api/tomtom/5.51.0/sdk/maps.css'>
+        <link rel='stylesheet' type='text/css' href='../../../../api/tomtom/5.51.0/plugins/assets/ui-library/index.css'/>
+    </head>
+    <style>
+        .marker-start-icon {
+            background-size: contain;
+        }
+        .marker-end-icon {
+            background-size: contain;
+        }
+        .marker-point-icon {
+            background-size: contain;
+        }
+    </style>
+    <body>
+        <div class='map-view'>
+            <div id='map' class='full-map'></div>
+        </div>
+        <script src='../../../../api/tomtom/5.51.0/sdk/maps-web.min.js'></script>
+        <script type='text/javascript' src='../../../../api/tomtom/5.51.0/plugins/assets/js/mobile-or-tablet.js'></script>
+        <script>
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '../../../../api/sel/1.01/global/result.php?id='+getQueryParams()['id'], true);
+
+            xhr.onload = function(){
+                if (this.status==200){
+                        var result =JSON.parse(this.responseText);
+                        var params=JSON.parse(result["result"]);
+                        var map_settings=JSON.parse(params.map_settings);
+
+                        var map = tt.map({
+                                        key: params.key,
+                                        container: 'map',
+                                        style: 'tomtom://'+map_settings.MapType+'/1/'+map_settings.MapStyle+'-'+map_settings.MapNight,
+                                        dragPan: !isMobileOrTablet(),
+                                        language: map_settings.MapLanguage
+                                    });
+
+                                    map.addControl(new tt.NavigationControl());
+                                    map.once('load', handleCalculateRouteRequest);
+
+                                    function handleCalculateRouteRequest() {
+                                        //Add route line
+                                        var LngLatAll=[];
+                                        for (i=0;i<params.locs.length;i++){
+                                            var LngLat=[];
+                                            for (var i1=0;i1<params.locs[i].points.length; i1++){
+                                                LngLat[i1]=[params.locs[i].points[i1].lon,params.locs[i].points[i1].lat]
+                                                LngLatAll[i1]=[params.locs[i].points[i1].lon,params.locs[i].points[i1].lat]
+                                            }
+
+                                            routelayout=getRouteColor(params.locs[i].weight);
+
+                                            addLayer(i,LngLat,routelayout[0],routelayout[1]);
+
+                                            LngLat=[];
+                                        }
+
+                                        //Zoom
+                                        var bounds = new tt.LngLatBounds();
+                                        LngLatAll.forEach(function(point) {
+                                            bounds.extend(tt.LngLat.convert(point));
+                                        });
+                                        map.fitBounds(bounds, { duration: 0, padding: 150 });
+
+                                        //Add markers and set up popups
+                                        var markerslist=[];
+                                        for (var i=0;i<params.markers.length; i++){
+                                            if (i==0){
+                                                type="start"
+                                            }else if (i==params.markers.length-1){
+                                                type="end"
+                                            }else {
+                                                type="point"
+                                            }
+    
+                                            markerslist.push({id: i, type: type, lon: params.markers[i].lonlat.split(",")[1], lat: params.markers[i].lonlat.split(",")[0], popuphead: params.markers[i].popuptitle+" / "+params.markers[i].popuphead, popupbody:params.markers[i].popupbody, add: 0});
+                                        }
+
+                                        for (var i=0;i<markerslist.length;i++){
+                                            if (markerslist[i].type=="start" || markerslist[i].type=="end"){
+                                                markerslist[i].add=1;
+                                            }else{
+                                                markerfilter=markerslist.filter(function (e){return e.id<markerslist[i].id && e.lon==markerslist[i].lon && e.lat==markerslist[i].lat && e.add==1
+                                                })
+
+                                                if (markerfilter.length==0){
+                                                    markerslist[i].add=1;
+                                                }else{
+                                                    var id=markerslist.filter(function(e){return e.id==markerfilter[0].id})[0].id;
+                                                    markerslist[id].popuphead=markerslist[id].popuphead+"<br>"+markerslist[i].popuphead;
+                                                }
+                                            }
+                                        } 
+
+                                        for (var i=0;i<markerslist.length; i++){
+                                            if (markerslist[i].add==1){
+                                                if (i==0){
+                                                    type="start"
+                                                    path="img/"+map_settings.StartPointPicture.split("_")[1]+"/"+map_settings.StartPointPicture
+                                                    anchor=getIconAnchor(map_settings.StartPointPicture);
+                                                    size=map_settings.StartIconSize
+                                                }else if (i==markerslist.length-1){
+                                                    type="end"
+                                                    path="img/"+map_settings.EndPointPicture.split("_")[1]+"/"+map_settings.EndPointPicture
+                                                    anchor=getIconAnchor(map_settings.EndPointPicture);
+                                                    size=map_settings.EndIconSize
+                                                }else {
+                                                    type="point"
+                                                    path="img/"+map_settings.MiddlePointPicture.split("_")[1]+"/"+map_settings.MiddlePointPicture
+                                                    anchor=getIconAnchor(map_settings.MiddlePointPicture);
+                                                    size=map_settings.MiddleIconSize
+                                                }
+
+                                                addMarkers(
+                                                    markerslist[i].lon,
+                                                    markerslist[i].lat,
+                                                    type,
+                                                    size,
+                                                    path,
+                                                    anchor,
+                                                    "#"+(i+1)+"<br><b>"+markerslist[i].popuphead+"</b><br>"+markerslist[i].popupbody);
+                                                }
+                                        }
+                                    }
+
+                                    function addLayer(num, LngLat, color, linewidth){
+                                        map.addLayer({
+                                                        'id': 'route'+num,
+                                                        'type': 'line',
+                                                        'source': {
+                                                            'type': 'geojson',
+                                                            'data': {
+                                                                'type':'FeatureCollection',
+                                                                'features':[
+                                                                    {
+                                                                        'type':'Feature',
+                                                                        'geometry':{
+                                                                            'type':'LineString',
+                                                                            'properties':{},
+                                                                            'coordinates': LngLat
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        },
+                                                        'paint': {
+                                                            'line-color': color,
+                                                            'line-width': linewidth
+                                                        }
+                                                    });
+                                    }
+
+                                    function addMarkers(lon,lat,type,size,path,anchor,popup) {
+                                        var point=[lon,lat];
+                                        var iconmarker = document.createElement("div");
+                                        iconmarker.className = "marker-"+type+"-icon";
+                                        iconmarker.style.backgroundImage="url("+path+")";
+                                        iconmarker.style.width=size.split(";")[0];
+                                        iconmarker.style.height=size.split(";")[1];
+
+                                        var popup = new tt.Popup({offset: 35, closeOnMove: false, closeOnClick: false}).setHTML(popup);
+                                        var marker=new tt.Marker({element: iconmarker, anchor: anchor}).setLngLat(point).setPopup(popup).addTo(map);
+                                    }
+
+                                    function getRouteColor(RouteWeight){
+                                        var routelayout=[];
+                                        var RouteColor=map_settings.RouteColor0;
+                                        var RouteWidth=map_settings.RouteWidth0;
+
+                                        if (map_settings.VehicleWeight==0){
+                                            RouteColor=map_settings.RouteColor0;
+                                            RouteWidth=map_settings.RouteWidth0;
+                                        }else{
+                                            perc=RouteWeight/map_settings.VehicleWeight*100
+
+                                            if (perc==0){
+                                                RouteColor=map_settings.RouteColor0;
+                                                RouteWidth=map_settings.RouteWidth0;
+                                            }
+                                            if (perc>=0 && perc<20){
+                                                RouteColor=map_settings.RouteColor1;
+                                                RouteWidth=map_settings.RouteWidth1;
+                                            }
+                                            if (perc>=20 && perc<40){
+                                                RouteColor=map_settings.RouteColor2;
+                                                RouteWidth=map_settings.RouteWidth2;
+                                            }
+                                            if (perc>=40 && perc<60){
+                                                RouteColor=map_settings.RouteColor3;
+                                                RouteWidth=map_settings.RouteWidth3;
+                                            }
+                                            if (perc>=60 && perc<80){
+                                                RouteColor=map_settings.RouteColor4;
+                                                RouteWidth=map_settings.RouteWidth4;
+                                            }
+                                            if (perc>=80 && perc<100){
+                                                RouteColor=map_settings.RouteColor5;
+                                                RouteWidth=map_settings.RouteWidth5;
+                                            }
+                                        }
+
+                                        routelayout.push('#'+ RouteColor.substr(3,6), RouteWidth);
+                                        return routelayout
+                                    }
+
+                                    function getIconAnchor(LocationIcon){
+                                        var params=LocationIcon.split("_")
+                                        var anchor=params[4].split(".")[0]
+
+                                        if (anchor=="C"){
+                                            return "center";
+                                        }
+                                        if (anchor=="T"){
+                                            return "top";
+                                        }
+                                        if (anchor=="B"){
+                                            return "bottom";
+                                        }
+                                        if (anchor=="L"){
+                                            return "left";
+                                        }
+                                        if (anchor=="R"){
+                                            return "right";
+                                        }
+                                        if (anchor=="TL"){
+                                            return "top-left";
+                                        }
+                                        if (anchor=="TR"){
+                                            return "top-right";
+                                        }
+                                        if (anchor=="BL"){
+                                            return "bottom-left";
+                                        }
+                                        if (anchor=="BR"){
+                                            return "bottom-right";
+                                        }
+                                    }
+                                }
+            }
+
+            xhr.send();
+
+            function getQueryParams() {
+                let result = {};
+                let params = window.location.search;
+            
+                // remove the '?' character
+                params = params.substr(1);
+                let queryParamArray = params.split("&amp;");
+            
+                // iterate over parameter array
+                queryParamArray.forEach(function(queryParam) {
+                
+                // split the query parameter over '='
+                let item = queryParam.split("=");
+                result[item[0]] = decodeURIComponent(item[1]);
+                });
+
+                return result;
+            }
+        </script>
+    </body>
+</html>
