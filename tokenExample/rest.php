@@ -67,7 +67,6 @@
 			}
 
 			return $value;
-
 		}
         
         public function throwError($code, $message) {
