@@ -22,10 +22,10 @@ $status = new status($taskOut);
 $status->switchStatus(status::CONST_TRANSFERRED, '');
 
 //get new token
-$token = new token($taskOut);
+$out = $taskOut['token'];
 
 //set task status to accepted
 $status->switchStatus(status::CONST_ACCEPTED, '*TOKEN*');
 
-echo json_encode($token->getToken());
+echo json_encode($out);
 ?>

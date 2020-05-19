@@ -28,7 +28,7 @@ switch ($taskOut['inputParams']['body']['messageType']) {
         break;
 
     case SMS_INVITE:
-        $messageText = WEB_HOME . '/' . WEB_SELTRANSPORT_DL;
+        $messageText = WEB_SELTRANSPORT_DL;
         break;  
 
     case SMS_REGISTRATION:
@@ -48,7 +48,7 @@ switch ($taskOut['inputParams']['body']['messageType']) {
 switch ($taskOut['inputParams']['body']['provider']) {
     case 'SEEME':
         $sms = new seeMeSMS($taskOut, $messageText);
-        $out = $sms->send();
+        $smsOut = $sms->send();
         break;
 
     default:
@@ -57,7 +57,10 @@ switch ($taskOut['inputParams']['body']['provider']) {
 }
 
 //set task status to accepted
-$status->switchStatus(status::CONST_ACCEPTED, json_encode($out));
+$status->switchStatus(status::CONST_ACCEPTED, json_encode($smsOut));
+
+$out['newToken'] = $taskOut['token'];
+$out['result'] = $smsOut;
 
 echo json_encode($out);
 ?>

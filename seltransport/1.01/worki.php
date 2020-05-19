@@ -5,7 +5,7 @@
 //echo password_hash("e475950f06971715c399570fc9ba5cb3",PASSWORD_DEFAULT)
 
 //echo password_verify("e475950f06971715c399570fc9ba5cb3","$2y$10$d.rfp429In7rWgLqVycRwODi0Dy462.ae.0/rgs1IscC7DNyPZtOC")
-echo bin2hex(random_bytes(32))
+// echo bin2hex(random_bytes(32))
 // echo bin2hex(random_bytes(16))
 // echo bin2hex(random_bytes(8))
 // echo strtoupper(hash('sha512', 'kiskutya'))
@@ -24,4 +24,12 @@ echo bin2hex(random_bytes(32))
 // echo date('YmdHis', time());
 
 // echo strtotime(time());
+
+$out = [
+    "A" => "1",
+    "B" => "2",
+    "C" => "3"
+];
+
+var_dump($out);
 ?>
