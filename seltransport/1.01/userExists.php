@@ -12,7 +12,6 @@ require_once($settings['version_path'].'/autoload.php');
 $task = new syncTask();
 $taskOut = $task->addTask();
 
-$task->validateParameter('body/addUserName', STRING);
 $task->validateParameter('body/isRoot', INTEGER, true, '0, 1');
 $task->validateParameter('body/userName', STRING);
 $task->validateParameter('body/subscriberId', INTEGER);
@@ -28,7 +27,7 @@ $status = new status($taskOut);
 $status->switchStatus(status::CONST_TRANSFERRED, '');
 
 $user = new user($taskOut);
-$usrOut = $user->addUser();
+$usrOut = $user->userExists();
 
 //set task status to accepted
 $status->switchStatus(status::CONST_ACCEPTED, json_encode($usrOut));

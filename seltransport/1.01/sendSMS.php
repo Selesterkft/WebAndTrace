@@ -13,7 +13,7 @@ $task = new syncTask();
 $taskOut = $task->addTask();
 
 $task->validateParameter('body/provider', STRING);
-$task->validateParameter('body/apiKey', STRING);
+$task->validateParameter('body/apiKey', STRING), false;
 $task->validateParameter('body/messageType', STRING);
 $task->validateParameter('body/phoneNumber', STRING);
 $task->validateParameter('body/messageText', STRING, ($taskOut['inputParams']['body']['messageType'] == SMS_FREETEXT ? true : false));

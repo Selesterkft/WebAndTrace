@@ -25,11 +25,13 @@
 
 // echo strtotime(time());
 
-$out = [
-    "A" => "1",
-    "B" => "2",
-    "C" => "3"
-];
+// define('a', 'A');
+// define('b', 'B');
+// define('c', 'C');
 
-var_dump($out);
+// $out=a.',' . b. ',' . c;
+
+$out['A']['B']['C'] = 1;
+$out['A']['B']['D'] = 2;
+var_dump(json_encode($out));
 ?>

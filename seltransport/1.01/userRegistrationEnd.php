@@ -12,14 +12,11 @@ require_once($settings['version_path'].'/autoload.php');
 $task = new syncTask();
 $taskOut = $task->addTask();
 
-$task->validateParameter('body/addUserName', STRING);
-$task->validateParameter('body/isRoot', INTEGER, true, '0, 1');
 $task->validateParameter('body/userName', STRING);
-$task->validateParameter('body/subscriberId', INTEGER);
-$task->validateParameter('body/externalId', STRING);
+$task->validateParameter('body/registrationKey', STRING);
 
 //check task type
-if($taskOut['inputParams']['header']['taskType'] != TASK_TYPE_USR) {
+if($taskOut['inputParams']['header']['taskType'] != TASK_TYPE_REGISTRATION_END) {
     new errorMsg(REQUEST_WRONG_TASK_TYPE, 'Wrong task type (' . $taskOut['inputParams']['header']['taskType'] . ')', $taskOut);
 }
 
@@ -28,7 +25,7 @@ $status = new status($taskOut);
 $status->switchStatus(status::CONST_TRANSFERRED, '');
 
 $user = new user($taskOut);
-$usrOut = $user->addUser();
+$usrOut = $user->registrationEnd();
 
 //set task status to accepted
 $status->switchStatus(status::CONST_ACCEPTED, json_encode($usrOut));

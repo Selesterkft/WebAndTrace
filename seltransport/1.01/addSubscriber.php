@@ -37,5 +37,4 @@ $out = [
 ];
 
 echo json_encode($out);
-
 ?>
