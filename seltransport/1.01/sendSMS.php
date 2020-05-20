@@ -12,6 +12,13 @@ require_once($settings['version_path'].'/autoload.php');
 $task = new syncTask();
 $taskOut = $task->addTask();
 
+$task->validateParameter('body/provider', STRING);
+$task->validateParameter('body/apiKey', STRING);
+$task->validateParameter('body/messageType', STRING);
+$task->validateParameter('body/phoneNumber', STRING);
+$task->validateParameter('body/messageText', STRING, ($taskOut['inputParams']['body']['messageType'] == SMS_FREETEXT ? true : false));
+$task->validateParameter('body/sender', STRING, false);
+
 //check task type
 if($taskOut['inputParams']['header']['taskType'] != TASK_TYPE_SMS) {
     new errorMsg(REQUEST_WRONG_TASK_TYPE, 'Wrong task type (' . $taskOut['inputParams']['header']['taskType'] . ')', $taskOut);
@@ -59,8 +66,10 @@ switch ($taskOut['inputParams']['body']['provider']) {
 //set task status to accepted
 $status->switchStatus(status::CONST_ACCEPTED, json_encode($smsOut));
 
-$out['newToken'] = $taskOut['token'];
-$out['result'] = $smsOut;
+$out = [
+    'newToken' => $taskOut['token'],
+    'result' => $smsOut
+];
 
 echo json_encode($out);
 ?>
