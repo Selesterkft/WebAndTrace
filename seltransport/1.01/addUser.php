@@ -12,7 +12,6 @@ require_once($settings['version_path'].'/autoload.php');
 $task = new syncTask();
 $taskOut = $task->addTask();
 
-$task->validateParameter('body/addUserName', STRING);
 $task->validateParameter('body/isRoot', INTEGER, true, '0, 1');
 $task->validateParameter('body/userName', STRING);
 $task->validateParameter('body/subscriberId', INTEGER);

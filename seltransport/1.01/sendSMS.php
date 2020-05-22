@@ -13,7 +13,7 @@ $task = new syncTask();
 $taskOut = $task->addTask();
 
 $task->validateParameter('body/provider', STRING);
-$task->validateParameter('body/apiKey', STRING), false;
+$task->validateParameter('body/apiKey', STRING, false);
 $task->validateParameter('body/messageType', STRING);
 $task->validateParameter('body/phoneNumber', STRING);
 $task->validateParameter('body/messageText', STRING, ($taskOut['inputParams']['body']['messageType'] == SMS_FREETEXT ? true : false));
@@ -37,10 +37,6 @@ switch ($taskOut['inputParams']['body']['messageType']) {
     case SMS_INVITE:
         $messageText = WEB_SELTRANSPORT_DL;
         break;  
-
-    case SMS_REGISTRATION:
-        $messageText = ''; //még meg kell csinálni (VI)
-        break;
 
     case SMS_TRACKING:
         $messageText = ''; //még meg kell csinálni (VI)

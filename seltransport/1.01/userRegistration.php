@@ -12,12 +12,7 @@ require_once($settings['version_path'].'/autoload.php');
 $task = new syncTask();
 $taskOut = $task->addTask();
 
-//EZ MÉG ITTEN SZAR
-// $confirmationTypeString = 'NONE,SMS,EMAIL';
-// $confirmationTypeString = USER_CONFIRMATION_NONE . ',' . USER_CONFIRMATION_EMAIL . ',' . USER_CONFIRMATION_SMS;
-
-// $task->validateParameter('body/confirmationType', STRING, true, $confirmationTypeString);
-$task->validateParameter('body/confirmationType', STRING);
+$task->validateParameter('body/confirmationType', STRING, true, USER_CONFIRMATION_NONE . ',' . USER_CONFIRMATION_EMAIL . ',' . USER_CONFIRMATION_SMS);
 $task->validateParameter('body/userName', STRING);
 
 if(isset($taskOut['inputParams']['body']['phoneNumber']) == true) {
@@ -37,16 +32,20 @@ $user = new user($taskOut);
 $regOut = $user->registration();
 
 if($regOut['result'] == 'NOK') {
-    echo json_encode($regOut);
-    die;
+    new errorMsg(USER_REGISTRATION_ERROR, 'User registration error. Result: ' . json_encode($regOut), $taskOut);
 }
 
 switch ($taskOut['inputParams']['body']['confirmationType']) {
     case USER_CONFIRMATION_NONE:
         $regEndOut = $user->registrationEnd($regOut['registrationKey']);
         if($regEndOut['result'] == 'NOK') {
-            echo json_encode($regEndOut);
-            die;
+            new errorMsg(USER_REGISTRATION_ERROR, 'User registration end error. Result: ' . json_encode($regEndOut), $taskOut);
+        }else{
+            $out = [
+                'newToken' => $taskOut['token'],
+                'masterKey' => $regEndOut['masterKey'],
+                'registrationKey' => $regOut['registrationKey']
+            ];
         }
         break;
 
@@ -61,25 +60,19 @@ switch ($taskOut['inputParams']['body']['confirmationType']) {
 
         $sms = new seeMeSMS($inputJSON, '#' . $regOut['registrationKey']);
         $smsOut = $sms->send();
+
+        if($smsOut['result'] == 'NOK') {
+            new errorMsg(USER_REGISTRATION_ERROR, 'User registration SMS sending error. Result: ' . json_encode($smsOut), $taskOut);
+        }else{
+            $out = [
+                'newToken' => $taskOut['token']
+            ];
+        }
         break;
 }
 
 //set task status to accepted
 $status->switchStatus(status::CONST_ACCEPTED, json_encode($regOut));
-
-if(isset($regEndOut) == false) {
-    $out = [
-        'newToken' => $taskOut['token'],
-        'registrationKey' => $regOut['registrationKey']
-    ];
-}else{
-    $out = [
-        'newToken' => $taskOut['token'],
-        'registrationKey' => $regOut['registrationKey'],
-        'masterKey' => $regEndOut['masterKey']
-    ];
-
-}
 
 echo json_encode($out);
 ?>
