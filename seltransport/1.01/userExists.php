@@ -18,7 +18,7 @@ $task->validateParameter('body/subscriberId', INTEGER);
 $task->validateParameter('body/externalId', STRING);
 
 //check task type
-if($taskOut['inputParams']['header']['taskType'] != TASK_TYPE_USR) {
+if($taskOut['inputParams']['header']['taskType'] != TASK_TYPE_USER) {
     new errorMsg(REQUEST_WRONG_TASK_TYPE, 'Wrong task type (' . $taskOut['inputParams']['header']['taskType'] . ')', $taskOut);
 }
 

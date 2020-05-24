@@ -12,12 +12,8 @@ require_once( $settings['version_path'].'/autoload.php' );
 $task = new syncTask();
 $taskOut = $task->addTask();
 
-$task->validateParameter( 'body/userName', STRING );
-$task->validateParameter( 'body/registrationKey', STRING );
-$task->validateParameter( 'body/masterKey', STRING );
-
 //check task type
-if( $taskOut['inputParams']['header']['taskType'] != TASK_TYPE_TOKEN ) {
+if( $taskOut['inputParams']['header']['taskType'] != TASK_TYPE_TRANSPORT ) {
     new errorMsg( REQUEST_WRONG_TASK_TYPE, 'Wrong task type (' . $taskOut['inputParams']['header']['taskType'] . ')', $taskOut );
 }
 
@@ -25,11 +21,17 @@ if( $taskOut['inputParams']['header']['taskType'] != TASK_TYPE_TOKEN ) {
 $status = new status( $taskOut );
 $status->switchStatus( status::CONST_TRANSFERRED, '' );
 
-//get new token
-$out = $taskOut['token'];
+$transport = new transport( $taskOut );
+$trnspOut = $transport->getTransportData();
 
 //set task status to accepted
-$status->switchStatus( status::CONST_ACCEPTED, '*TOKEN*' );
+
+$status->switchStatus( status::CONST_ACCEPTED, 'taskList' );
+
+$out = [
+    'newToken' => $taskOut['token'],
+    'result' => $trnspOut
+];
 
 echo json_encode( $out );
 ?>
