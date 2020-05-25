@@ -44,7 +44,8 @@ switch ($taskOut['inputParams']['body']['confirmationType']) {
             $out = [
                 'newToken' => $taskOut['token'],
                 'masterKey' => $regEndOut['masterKey'],
-                'registrationKey' => $regOut['registrationKey']
+                'registrationKey' => $regOut['registrationKey'],
+                'subscriberId' => $regEndOut['subscriberId']
             ];
         }
         break;
