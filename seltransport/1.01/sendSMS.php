@@ -35,7 +35,7 @@ switch ($taskOut['inputParams']['body']['messageType']) {
         break;
 
     case SMS_INVITE:
-        $messageText = WEB_SELTRANSPORT_DL;
+        $messageText = 'SelExped Transport alkalmazás telepítése: ' . WEB_SELTRANSPORT_DL;
         break;  
 
     case SMS_TRACKING:
